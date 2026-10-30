@@ -1,4 +1,5 @@
 import type { CheckDeadline } from "./checkDeadline.js";
+import { SEEK_SETTLES_BEFORE_PROTOCOL_TIMEOUT_MS } from "../capture/captureTimeout.js";
 import { logCheckProgress } from "./checkProgress.js";
 import { BrowserCleanupError, closeManagedBrowser, onStopSignal } from "../browser/launch.js";
 import { collectMotionBlurDrafts, dropMotionBlurConsoleEcho } from "./checkMotionBlur.js";
@@ -1229,6 +1230,7 @@ async function overlapGridInPage(
     fallback: boolean;
     skipDraws: boolean;
     videoFrames: boolean;
+    timeoutMs: number;
   },
   seek: typeof seekInPage,
   anchors: typeof anchorsInPage,
@@ -1236,11 +1238,15 @@ async function overlapGridInPage(
   const audit = Reflect.get(window, "__hyperframesOverlapAudit");
   const waitForCompletion = Reflect.get(window, "__hfWaitForSeekCompletion");
   const samples: OverlapGridSample[] = [];
+  const deadline = performance.now() + grid.timeoutMs;
   for (const time of grid.times) {
     console.debug(`${grid.marker}${time}`);
     seek(time, grid.fallback, false, grid.skipDraws);
     if (typeof waitForCompletion === "function") {
-      await Reflect.apply(waitForCompletion, window, [{ videoFrames: grid.videoFrames }]);
+      const timeoutMs = Math.max(0, deadline - performance.now());
+      await Reflect.apply(waitForCompletion, window, [
+        { videoFrames: grid.videoFrames, timeoutMs },
+      ]);
     }
     const result: unknown =
       typeof audit === "function" ? Reflect.apply(audit, window, [{ time }]) : [];
@@ -1264,6 +1270,7 @@ async function collectOverlapGrid(page: Page, times: number[]): Promise<Anchored
     fallback: DENSE_GEOMETRY_SEEK_OPTIONS.fallbackToBridgeAndTimelines,
     skipDraws: DENSE_GEOMETRY_SEEK_OPTIONS.skipWebglDraws,
     videoFrames: DENSE_GEOMETRY_SEEK_OPTIONS.waitForVideoFrames,
+    timeoutMs: SEEK_SETTLES_BEFORE_PROTOCOL_TIMEOUT_MS,
   };
   const samples = (await page.evaluate(
     `(${overlapGridInPage})(${JSON.stringify(grid)}, ${seekInPage}, ${anchorsInPage})`,
