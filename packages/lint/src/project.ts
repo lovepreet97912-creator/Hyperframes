@@ -575,6 +575,8 @@ function lintTextureMaskAssetNotFound(
   });
 }
 
+const PAGES_OPENED_BESIDE_INDEX = new Set(["caption-skin.html", "podcast-lanes.html"]);
+
 function lintMultipleRootCompositions(projectDir: string): HyperframeLintFinding[] {
   const findings: HyperframeLintFinding[] = [];
   try {
@@ -583,7 +585,7 @@ function lintMultipleRootCompositions(projectDir: string): HyperframeLintFinding
     );
     const rootCompositions: string[] = [];
     for (const file of rootHtmlFiles) {
-      if (file === "caption-skin.html") continue;
+      if (PAGES_OPENED_BESIDE_INDEX.has(file)) continue;
       const content = readFileSync(join(projectDir, file), "utf-8");
       if (/data-composition-id/i.test(content)) {
         rootCompositions.push(file);
