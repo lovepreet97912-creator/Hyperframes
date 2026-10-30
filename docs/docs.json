@@ -861,7 +861,8 @@
               "packages/cli",
               "developers/catalog-search",
               "developers/harness-tool-context",
-              "packages/lint"
+              "packages/lint",
+              "guides/visual-regression"
             ]
           },
           {
@@ -912,7 +913,8 @@
               "reference/color-grading",
               "reference/audio-effects",
               "reference/speed-ramps",
-              "reference/lint-rules"
+              "reference/lint-rules",
+              "reference/cli-golden"
             ]
           },
           {
