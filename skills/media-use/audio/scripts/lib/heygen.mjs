@@ -214,8 +214,38 @@ export async function heygenJSON(path, { method = "GET", headers = {}, body } = 
   return text ? JSON.parse(text) : {};
 }
 
-// HeyGen's own words for a failed call: its {"error":{"message"}}, else the raw body, else the error's message.
+// Where a refused HyperFrames-plan call sends the person. The plans and credits pages are not live yet;
+// override with $HYPERFRAMES_PLANS_URL / $HYPERFRAMES_CREDITS_URL until they are.
+const PLANS_URL = () => process.env.HYPERFRAMES_PLANS_URL || "https://hyperframes.studio/";
+const CREDITS_URL = () => process.env.HYPERFRAMES_CREDITS_URL || PLANS_URL();
+
+function errorCode(body) {
+  try {
+    const parsed = JSON.parse(body);
+    return parsed?.error?.code ?? parsed?.code ?? null;
+  } catch {
+    return null;
+  }
+}
+
+// One line the agent relays as written when the HyperFrames plan can't pay: no plan, out of credits, or a
+// sign-in the plan doesn't cover yet. Null for every other failure.
+export function billingRefusal(e) {
+  const code = e?.body ? errorCode(e.body) : null;
+  if (code === "hf_subscription_required")
+    return `This needs a HyperFrames plan. Subscribe: ${PLANS_URL()}`;
+  if (code === "hf_usage_exhausted")
+    return `Out of HyperFrames credits. Add credits: ${CREDITS_URL()}`;
+  if (code === "api_key_required")
+    return "This HeyGen feature isn't available with this sign-in yet. Nothing was charged. Use a HeyGen API key, or wait for HyperFrames billing in the CLI.";
+  return null;
+}
+
+// HeyGen's own words for a failed call: a billing refusal line first, then its {"error":{"message"}}, else the
+// raw body, else the error's message.
 export function heygenMessage(e) {
+  const refusal = billingRefusal(e);
+  if (refusal) return refusal;
   if (!e?.body) return e?.message ? String(e.message) : String(e);
   try {
     return JSON.parse(e.body).error?.message ?? e.body;
