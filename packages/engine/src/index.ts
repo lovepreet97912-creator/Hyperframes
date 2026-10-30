@@ -384,6 +384,7 @@ export {
   isBlockedNetworkHost,
   downloadToTemp,
   fetchPublicHttpsText,
+  fetchPublicHttpsBytes,
   isHttpUrl,
   safeDownloadUrlIdentity,
   writeUrlDownloadTelemetry,
@@ -391,6 +392,7 @@ export {
   type UrlDownloadOptions,
   type UrlDownloadTelemetry,
   type PublicHttpsTextOptions,
+  type PublicHttpsBytesOptions,
 } from "./utils/urlDownloader.js";
 export {
   runFfmpeg,
