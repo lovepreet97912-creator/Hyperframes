@@ -3538,6 +3538,7 @@ async function executeRenderPipeline(input: {
     });
     const effectiveHdr = resolveEffectiveHdrMode({
       hdrMode: job.config.hdrMode,
+      media: composition,
       outputFormat,
       extractionResult,
       imageColorSpaces,
